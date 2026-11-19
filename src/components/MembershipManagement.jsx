@@ -961,7 +961,23 @@ export default function MembershipManagement({ branches: propBranches = [] }) {
                   </div>
                   <div className="form-group">
                     <label htmlFor="plan-quantity">Product Quantity *</label>
-                    <input id="plan-quantity" required maxLength={100} value={form.product_quantity} readOnly={readOnly} onChange={event => setForm({ ...form, product_quantity: event.target.value })} />
+                    <input
+                      id="plan-quantity"
+                      list="membership-quantity-options"
+                      required
+                      maxLength={100}
+                      placeholder="e.g. 500 g per delivery or 1.5 kg per delivery"
+                      value={form.product_quantity}
+                      readOnly={readOnly}
+                      onChange={event => setForm({ ...form, product_quantity: event.target.value })}
+                    />
+                    <datalist id="membership-quantity-options">
+                      <option value="250 g per delivery" />
+                      <option value="500 g per delivery" />
+                      <option value="1 kg per delivery" />
+                      <option value="1.5 kg per delivery" />
+                    </datalist>
+                    <small className="membership-help-text">Enter any custom amount in grams or kilograms.</small>
                   </div>
                   <div className="form-group">
                     <label htmlFor="plan-status">Plan Status</label>

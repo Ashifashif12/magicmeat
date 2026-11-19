@@ -18,6 +18,7 @@ import {
 import { fetchBranches, fetchAllSales, fetchProducts } from '../services/supabase.js';
 import ReceiptModal from './ReceiptModal.jsx';
 import { useToast } from './ToastProvider.jsx';
+import { formatWeight } from '../utils/weight.js';
 
 export default function AdminDashboard({ branches }) {
   const toast = useToast();
@@ -105,7 +106,7 @@ export default function AdminDashboard({ branches }) {
     const itemsWeight = (s.items || []).reduce((sum, it) => sum + (Number(it.qty_grams) || 0), 0);
     return acc + itemsWeight;
   }, 0);
-  const totalKgSold = (totalGramsSold / 1000).toFixed(1);
+  const totalWeightSold = formatWeight(totalGramsSold);
 
   // Branch-wise aggregation
   const branchStats = useMemo(() => {
@@ -132,7 +133,7 @@ export default function AdminDashboard({ branches }) {
         ...b,
         bills: bSales.length,
         total: bTotal,
-        kgSold: (bGrams / 1000).toFixed(1),
+        weightSold: formatWeight(bGrams),
         share: share.toFixed(1),
         cash: bCash,
         upi: bUpi,
@@ -252,7 +253,7 @@ export default function AdminDashboard({ branches }) {
               <Package size={20} color="#f59e0b" />
             </div>
           </div>
-          <div className="kpi-value">{totalKgSold} kg</div>
+          <div className="kpi-value">{totalWeightSold}</div>
           <div className="kpi-footer">Across all fresh cuts</div>
         </div>
 
@@ -326,7 +327,7 @@ export default function AdminDashboard({ branches }) {
                   </div>
                   <div className="process-metric-item">
                     <span className="process-metric-label">Meat Sold</span>
-                    <strong className="process-metric-val">{b.kgSold} kg</strong>
+                    <strong className="process-metric-val">{b.weightSold}</strong>
                   </div>
                 </div>
 
@@ -381,7 +382,7 @@ export default function AdminDashboard({ branches }) {
                   </div>
                   <div className="stat-amounts">
                     <strong>{money(b.total)}</strong>
-                    <span className="stat-bills-count">({b.bills} bills · {b.kgSold} kg)</span>
+                    <span className="stat-bills-count">({b.bills} bills · {b.weightSold})</span>
                   </div>
                 </div>
 
@@ -468,11 +469,9 @@ export default function AdminDashboard({ branches }) {
                   <td>
                     <span className="items-summary-badge">
                       {(s.items || []).length} items (
-                      {(
-                        (s.items || []).reduce((acc, it) => acc + (Number(it.qty_grams) || 0), 0) /
-                        1000
-                      ).toFixed(1)}{' '}
-                      kg)
+                      {formatWeight(
+                        (s.items || []).reduce((acc, it) => acc + (Number(it.qty_grams) || 0), 0)
+                      )})
                     </span>
                   </td>
                   <td>

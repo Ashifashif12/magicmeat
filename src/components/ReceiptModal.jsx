@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Printer, CheckCircle, X, Download, Share2 } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
+import { formatWeight } from '../utils/weight.js';
 
 export default function ReceiptModal({ isOpen, onClose, sale, branch }) {
   const barcodeRef = useRef(null);
@@ -27,14 +28,6 @@ export default function ReceiptModal({ isOpen, onClose, sale, branch }) {
   };
 
   const money = n => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(n || 0));
-
-  const formatWeight = grams => {
-    const g = Number(grams) || 0;
-    if (g >= 1000) {
-      return (g / 1000).toFixed(g % 1000 === 0 ? 1 : 2) + ' kg';
-    }
-    return g + ' g';
-  };
 
   const branchAddress = branch?.address || 'Chennai, Tamil Nadu';
   const branchPhone = branch?.phone || '+91 98401 22334';

@@ -682,6 +682,49 @@ svg {
   border-color: var(--primary);
 }
 
+.weight-custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px 36px;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.weight-custom-row input,
+.weight-custom-row select {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 4px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.weight-custom-row button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 36px;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.weight-entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 8px;
+}
+
+.weight-entry-row input,
+.weight-entry-row select {
+  width: 100%;
+  min-width: 0;
+}
+
 /* =====================================================================
    POS CART DRAWER
    ===================================================================== */
@@ -2708,13 +2751,13 @@ svg {
     max-width: 140px;
   }
 
-  /* Prevent iOS Safari auto-zoom on input focus */
+  /* Keep form controls compact on touch screens. */
   input[type="text"],
   input[type="number"],
   input[type="password"],
   select,
   textarea {
-    font-size: 16px !important;
+    font-size: 14px !important;
   }
 
   .admin-header-row {
@@ -5085,6 +5128,11 @@ svg {
   .pos-product-card {
     gap: 3px;
     padding: 8px;
+  }
+
+  .weight-custom-row {
+    grid-template-columns: minmax(0, 1fr) 40px 32px;
+    gap: 2px;
   }
 
   .product-title {

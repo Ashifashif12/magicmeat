@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Plus, AlertTriangle, ArrowDownLeft, Store, RefreshCw } from 'lucide-react';
 import { fetchProducts, fetchBranchStock, addStockRecord } from '../services/supabase.js';
 import { useToast } from './ToastProvider.jsx';
+import { convertWeightAmount, formatWeight, weightToGrams } from '../utils/weight.js';
 
 export default function InventoryManager({ branches }) {
   const toast = useToast();
@@ -13,7 +14,8 @@ export default function InventoryManager({ branches }) {
 
   // Inward form
   const [inwardProduct, setInwardProduct] = useState('');
-  const [inwardKg, setInwardKg] = useState('');
+  const [inwardQuantity, setInwardQuantity] = useState('');
+  const [inwardUnit, setInwardUnit] = useState('kg');
   const [inwardNotes, setInwardNotes] = useState('Farm/Vendor Delivery');
 
   const money = n => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(n || 0));
@@ -43,9 +45,14 @@ export default function InventoryManager({ branches }) {
 
   async function handleInwardStock(e) {
     e.preventDefault();
-    if (!selectedBranchId || !inwardProduct || !inwardKg) return;
+    if (!selectedBranchId || !inwardProduct) return;
 
-    const qtyGrams = Math.round(Number(inwardKg) * 1000);
+    const qtyGrams = weightToGrams(inwardQuantity, inwardUnit);
+    if (!qtyGrams) {
+      toast('Enter a valid received weight greater than zero.', 'error');
+      return;
+    }
+
     const res = await addStockRecord({
       branchId: selectedBranchId,
       productId: inwardProduct,
@@ -55,10 +62,11 @@ export default function InventoryManager({ branches }) {
 
     if (res.success) {
       setShowInwardModal(false);
-      setInwardKg('');
+      setInwardQuantity('');
+      setInwardUnit('kg');
       setInwardNotes('Farm/Vendor Delivery');
       loadInventory();
-      toast(`Successfully added ${inwardKg} kg stock inward!`);
+      toast(`Successfully added ${inwardQuantity} ${inwardUnit} stock inward!`);
     } else {
       toast('Could not save stock: ' + (res.error || 'Unknown error'), 'error');
     }
@@ -67,7 +75,7 @@ export default function InventoryManager({ branches }) {
   const selectedBranch = branches?.find(b => b.id === selectedBranchId) || branches?.[0];
 
   // Total stock calculation
-  const totalStockKg = Object.values(stockMap).reduce((acc, g) => acc + (Number(g) || 0), 0) / 1000;
+  const totalStockGrams = Object.values(stockMap).reduce((acc, g) => acc + (Number(g) || 0), 0);
 
   return (
     <div className="admin-container">
@@ -118,7 +126,7 @@ export default function InventoryManager({ branches }) {
               <Package size={20} color="#f59e0b" />
             </div>
           </div>
-          <div className="kpi-value">{totalStockKg.toFixed(1)} kg</div>
+          <div className="kpi-value">{formatWeight(totalStockGrams)}</div>
           <div className="kpi-footer">Across all cut varieties</div>
         </div>
       </div>
@@ -140,7 +148,7 @@ export default function InventoryManager({ branches }) {
                 <th>Meat Variety & Cut</th>
                 <th>Category</th>
                 <th>Price / KG</th>
-                <th>Current Stock (KG)</th>
+                <th>Current Stock</th>
                 <th>Stock Status</th>
                 <th>Actions</th>
               </tr>
@@ -148,7 +156,6 @@ export default function InventoryManager({ branches }) {
             <tbody>
               {products.map(p => {
                 const grams = stockMap[p.id] || 0;
-                const kg = (grams / 1000).toFixed(2);
                 const isLow = grams < 5000;
                 const isOut = grams <= 0;
 
@@ -165,7 +172,7 @@ export default function InventoryManager({ branches }) {
                     <td>{money(p.price_per_kg)}</td>
                     <td className="font-bold font-mono">
                       <span className={isLow ? 'text-red font-bold' : 'text-emerald'}>
-                        {kg} kg
+                        {formatWeight(grams)}
                       </span>
                     </td>
                     <td>
@@ -241,18 +248,32 @@ export default function InventoryManager({ branches }) {
                 </div>
 
                 <div className="form-group">
-                  <label>Received Weight (in KG) *</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0.1"
-                    required
-                    placeholder="e.g. 50.0 (adds 50,000 grams)"
-                    value={inwardKg}
-                    onChange={e => setInwardKg(e.target.value)}
-                  />
+                  <label>Received Weight *</label>
+                  <div className="weight-entry-row">
+                    <input
+                      type="number"
+                      step={inwardUnit === 'kg' ? '0.001' : '1'}
+                      min={inwardUnit === 'kg' ? '0.001' : '1'}
+                      required
+                      placeholder={inwardUnit === 'kg' ? 'e.g. 50.0' : 'e.g. 50000'}
+                      value={inwardQuantity}
+                      onChange={e => setInwardQuantity(e.target.value)}
+                    />
+                    <select
+                      value={inwardUnit}
+                      onChange={e => {
+                        const unit = e.target.value;
+                        setInwardQuantity(convertWeightAmount(inwardQuantity, inwardUnit, unit));
+                        setInwardUnit(unit);
+                      }}
+                      aria-label="Received weight unit"
+                    >
+                      <option value="g">Grams (g)</option>
+                      <option value="kg">Kilograms (kg)</option>
+                    </select>
+                  </div>
                   <small className="form-hint">
-                    1 KG = 1,000 grams automatically converted in database.
+                    Stock is stored as grams and converted automatically.
                   </small>
                 </div>
 

@@ -17,6 +17,7 @@ import {
 import { fetchAllSales, fetchBranchStock } from '../services/supabase.js';
 import ReceiptModal from './ReceiptModal.jsx';
 import { useToast } from './ToastProvider.jsx';
+import { formatWeight } from '../utils/weight.js';
 
 export default function BranchSalesHistory({ branch }) {
   const toast = useToast();
@@ -93,10 +94,10 @@ export default function BranchSalesHistory({ branch }) {
     const itemsWeight = (s.items || []).reduce((sum, it) => sum + (Number(it.qty_grams) || 0), 0);
     return acc + itemsWeight;
   }, 0);
-  const totalKgSold = (totalGramsSold / 1000).toFixed(1);
+  const totalWeightSold = formatWeight(totalGramsSold);
 
   // Total Stock in Cold Storage
-  const totalStockKg = Object.values(stockMap).reduce((acc, g) => acc + (Number(g) || 0), 0) / 1000;
+  const totalStockGrams = Object.values(stockMap).reduce((acc, g) => acc + (Number(g) || 0), 0);
   const lowStockCount = Object.values(stockMap).filter(g => Number(g) < 5000).length;
 
   // Payment Breakdown
@@ -213,7 +214,7 @@ export default function BranchSalesHistory({ branch }) {
               <Package size={20} color="#f59e0b" />
             </div>
           </div>
-          <div className="kpi-value">{totalKgSold} kg</div>
+          <div className="kpi-value">{totalWeightSold}</div>
           <div className="kpi-footer">Fresh butchery cuts</div>
         </div>
 
@@ -224,7 +225,7 @@ export default function BranchSalesHistory({ branch }) {
               <Layers size={20} color="#a855f7" />
             </div>
           </div>
-          <div className="kpi-value">{totalStockKg.toFixed(1)} kg</div>
+          <div className="kpi-value">{formatWeight(totalStockGrams)}</div>
           <div className="kpi-footer">
             {lowStockCount > 0 ? (
               <span style={{ color: '#ef4444', fontWeight: 'bold' }}>{lowStockCount} cuts low stock</span>

@@ -21,6 +21,7 @@ import { fetchProducts, fetchBranchStock, processSale } from '../services/supaba
 import { CUTTING_STYLES } from '../services/mockData.js';
 import ReceiptModal from './ReceiptModal.jsx';
 import { useToast } from './ToastProvider.jsx';
+import { convertWeightAmount, formatWeight, weightToGrams } from '../utils/weight.js';
 
 function getSavedBillingDraft() {
   try {
@@ -39,6 +40,7 @@ export default function Billing({ profile, activeBranch, branches, onSelectBranc
   const [stockMap, setStockMap] = useState({});
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customWeights, setCustomWeights] = useState({});
   const [cart, setCart] = useState(savedDraft.cart || []);
   const [customerName, setCustomerName] = useState(savedDraft.customerName || '');
   const [customerPhone, setCustomerPhone] = useState(savedDraft.customerPhone || '');
@@ -116,6 +118,34 @@ export default function Billing({ profile, activeBranch, branches, onSelectBranc
           cuttingStyle: 'Curry Cut (Medium)'
         }
       ];
+    });
+  }
+
+  function addCustomWeight(product, customWeight) {
+    const grams = weightToGrams(customWeight.value, customWeight.unit);
+    if (!grams) {
+      toast('Enter a custom weight greater than zero.', 'error');
+      return;
+    }
+
+    addToCart(product, grams);
+  }
+
+  function updateCustomWeight(productId, changes) {
+    setCustomWeights(current => ({
+      ...current,
+      [productId]: {
+        ...(current[productId] || { value: '', unit: 'g' }),
+        ...changes
+      }
+    }));
+  }
+
+  function changeCustomWeightUnit(productId, unit) {
+    const currentWeight = customWeights[productId] || { value: '', unit: 'g' };
+    updateCustomWeight(productId, {
+      value: convertWeightAmount(currentWeight.value, currentWeight.unit, unit),
+      unit
     });
   }
 
@@ -299,7 +329,7 @@ export default function Billing({ profile, activeBranch, branches, onSelectBranc
           <div className="products-grid">
             {filteredProducts.map(p => {
               const currentStockGrams = stockMap[p.id] || 0;
-              const stockKg = (currentStockGrams / 1000).toFixed(1);
+              const customWeight = customWeights[p.id] || { value: '', unit: 'g' };
               const isLowStock = currentStockGrams < 5000;
 
               return (
@@ -307,7 +337,7 @@ export default function Billing({ profile, activeBranch, branches, onSelectBranc
                   <div className="card-top">
                     <span className="card-cat-badge">{p.category}</span>
                     <span className={`stock-badge ${isLowStock ? 'stock-low' : 'stock-ok'}`}>
-                      {stockKg} kg left
+                      {formatWeight(currentStockGrams)} left
                     </span>
                   </div>
 
@@ -348,6 +378,33 @@ export default function Billing({ profile, activeBranch, branches, onSelectBranc
                       onClick={() => addToCart(p, 2000)}
                     >
                       +2 kg
+                    </button>
+                  </div>
+                  <div className="weight-custom-row">
+                    <input
+                      type="number"
+                      min={customWeight.unit === 'kg' ? '0.001' : '1'}
+                      step={customWeight.unit === 'kg' ? '0.001' : '1'}
+                      placeholder="Custom"
+                      value={customWeight.value}
+                      onChange={event => updateCustomWeight(p.id, { value: event.target.value })}
+                      aria-label={`Custom weight for ${p.name}`}
+                    />
+                    <select
+                      value={customWeight.unit}
+                      onChange={event => changeCustomWeightUnit(p.id, event.target.value)}
+                      aria-label={`Custom weight unit for ${p.name}`}
+                    >
+                      <option value="g">g</option>
+                      <option value="kg">kg</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => addCustomWeight(p, customWeight)}
+                      aria-label={`Add custom weight for ${p.name}`}
+                      title={`Add custom weight for ${p.name}`}
+                    >
+                      <Plus size={14} />
                     </button>
                   </div>
                 </div>
@@ -559,7 +616,7 @@ export default function Billing({ profile, activeBranch, branches, onSelectBranc
               <div className="bill-summary-card">
                 <div className="summary-line">
                   <span>Total Weight:</span>
-                  <span>{(totalWeightGrams / 1000).toFixed(2)} kg</span>
+                  <span>{formatWeight(totalWeightGrams)}</span>
                 </div>
                 <div className="summary-line grand-total-line">
                   <span>Grand Total:</span>
