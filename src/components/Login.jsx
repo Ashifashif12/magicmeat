@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Lock, ArrowRight, Store, Eye, EyeOff } from 'lucide-react';
 import { supabase, isConfigured } from '../services/supabase.js';
 import { useToast } from './ToastProvider.jsx';
@@ -10,19 +10,13 @@ const LOGIN_ACCOUNTS = {
   branchThree: 'magicmeat.branchthree@example.com'
 };
 
-export default function Login({ authNotice, onLogout }) {
+export default function Login({ onLogout }) {
   const toast = useToast();
   const [account, setAccount] = useState('admin');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (authNotice) {
-      toast(authNotice, 'error');
-    }
-  }, [authNotice, toast]);
 
   async function handleAuth(e) {
     e.preventDefault();

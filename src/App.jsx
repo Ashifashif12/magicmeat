@@ -150,7 +150,6 @@ export default function App() {
     return (
       <>
         <Login
-          authNotice={session ? 'This account does not have an active access profile. Ask the owner to assign your role and branch.' : ''}
           onLogout={handleLogout}
         />
         <SupabaseSetupModal
